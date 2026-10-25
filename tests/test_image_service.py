@@ -17,6 +17,16 @@ def test_valid_synthetic_image_is_accepted(tmp_path):
     assert "Valid image" in result.message
 
 
+def test_decompression_bomb_warning_is_rejected(tmp_path, monkeypatch):
+    path = make_image(tmp_path / "large_dimensions.png")
+    monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 5)
+
+    result = validate_image(path)
+
+    assert result.valid is False
+    assert "not a valid, decodable image" in result.message
+
+
 def test_missing_file_is_rejected(tmp_path):
     result = validate_image(tmp_path / "missing.png")
 

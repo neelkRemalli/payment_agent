@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
+import warnings
 
 from PIL import Image, UnidentifiedImageError
 
@@ -50,11 +51,20 @@ def validate_image(path: str | Path) -> ImageValidationResult:
 
     try:
         # verify() checks file structure; load() decodes the pixel data as well.
-        with Image.open(image_path) as image:
-            image.verify()
-        with Image.open(image_path) as image:
-            image.load()
-    except (UnidentifiedImageError, OSError, ValueError, SyntaxError, Image.DecompressionBombError):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(image_path) as image:
+                image.verify()
+            with Image.open(image_path) as image:
+                image.load()
+    except (
+        UnidentifiedImageError,
+        OSError,
+        ValueError,
+        SyntaxError,
+        Image.DecompressionBombError,
+        Image.DecompressionBombWarning,
+    ):
         return ImageValidationResult(False, "File content is not a valid, decodable image.")
 
     return ImageValidationResult(True, f"Valid image: {image_path}")
